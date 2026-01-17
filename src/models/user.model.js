@@ -31,7 +31,7 @@ const userSchema=new Schema({
     },
     coverImage:{
         type:String,
-        required:true
+        //required:true
     },
     watchHistory:[{
         type:mongoose.Schema.Types.ObjectId,
@@ -42,7 +42,7 @@ const userSchema=new Schema({
         required:[true,"password is required"]
     },
     refreshToken:{
-        type:string
+        type:String
     }
 
 
@@ -55,12 +55,12 @@ const userSchema=new Schema({
 
 userSchema.pre("save",async function (next){
     if(!this.isModefied("password")) return next()
-    this.password=bcrypt.hash(this.password,10)
+    this.password=await bcrypt.hash(this.password,10)
     next()
 } )
 
 userSchema.methods.ispasswordcorrect=async function(password){
-   return await  bcrypt.compare(this.password,password)
+   return await bcrypt.compare(this.password,password)
 
 }
 
