@@ -6,6 +6,9 @@ import {apiresponse} from "../utils/apiresponse.js"
 
 const registerUser = asyncHandler(async (req, res, next) => {
 
+  //console.log("REQ.FILES
+  //  =>", req.files);
+
    //1  get user details from frontened
     //2 validation-not empty
    //3  check if user already exists :username,email
@@ -17,19 +20,19 @@ const registerUser = asyncHandler(async (req, res, next) => {
     //9 return res
       //1->
       const {fullname,email,username,password} =req.body// req.body se jo data form ya json se aata hai ,url se jo data aata usko baad me handle karenge
-      console.log("EMAIL IS :",email)
+     // console.log("EMAIL IS :",email)
 
       //2->
       //if(fullname==="") throw new apierror(400,"mesg not found")
       if([fullname,email,username,password].some((field)=>
-        field?.trim==="")
+        field?.trim()==="")
       ){
         throw new apierror(400,"all fields are required")
       }
 
 
       //3->
-      const existedUser =User.findOne({
+      const existedUser =await User.findOne({
         $or:[{username},{email}]
       })
 
@@ -39,16 +42,25 @@ const registerUser = asyncHandler(async (req, res, next) => {
 
       //4->
        const avatarLocalPath=req.files?.avatar[0]?.path
-       const coverImagePath=req.files?.coverImage[0]?.path
+       //const coverImagePath=req.files?.coverImage[0]?.path
 
+       let coverImagePath;
+       if(req.files && Array.isArray(req.files.coverImage) &&
+      req.files.coverImage.length>0){
+        coverImagePath=req.files.coverImage[0].path
+      }
        if(!avatarLocalPath){
-        throw new apierror(400,"avatar file is required")
+        throw new apierror(400,"avatar file is  required")
        }
-       const coverImage=await uploadOnCloudinary(coverImagePath)
+       let coverImage=await uploadOnCloudinary(coverImagePath)
+ 
+      // console.log("AVATAR LOCAL PATH:", avatarLocalPath);
        
-       const avatar=await uploadOnCloudinary(avatarLocalPath)
+       let avatar=await uploadOnCloudinary(avatarLocalPath)
 
-       if(!avatar){
+       //console.log("CLOUDINARY AVATAR RESPONSE:", avatar);
+
+      if(!avatar){
         throw new apierror(400,"avatar file is required")
        }
 
@@ -88,4 +100,4 @@ const registerUser = asyncHandler(async (req, res, next) => {
     
 
 
-export {registerUser}
+export {registerUser} 

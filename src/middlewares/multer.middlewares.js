@@ -11,8 +11,8 @@
   }
 })
 export const upload = multer({ storage })
-
-
+//req.file me file hote hai like [avatar{upload},coverimage{upoad}]
+// ye upload me hota hai height,width,id,fieldname,originalname,path,size,destination req.file me ye sb rehta hai
 
 //Multer ek library hai
 //👉 Jo file upload handle karne ke liye middleware banati hai

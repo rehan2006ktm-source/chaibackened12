@@ -16,13 +16,17 @@ const uploadOnCloudinary=async(localfilepath)=>{
        const response= await cloudinary.uploader.upload(localfilepath,{
             resource_type:"auto"
         })
-        console.log("FILE HAS BEEN UPLOADED SUCCESSFULLY",response.url)
-       //  fs.unlinkSync(localfilepath)
+       // console.log("FILE HAS BEEN UPLOADED SUCCESSFULLY",response.url)
+        fs.unlinkSync(localfilepath)
        
-        return response
+        return response// session id ,id, url,secure url,version
     }
     catch(error){
-        fs.unlinkSync(localfilepath)
+        console.error("CLOUDINARY ERROR 👉", error.message);
+  
+        if(localfilepath){
+            fs.unlinkSync(localfilepath)
+        }
         return null
 
     }
