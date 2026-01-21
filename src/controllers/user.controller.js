@@ -3,6 +3,22 @@ import {apierror} from "../utils/apierror.js"
 import {User} from "../models/user.model.js"
 import  {uploadOnCloudinary} from "../utils/cloudnary.js"
 import {apiresponse} from "../utils/apiresponse.js"
+import jwt from "jsonwebtoken"
+const generateAccessAndRefreshToken=async(userId)=>{
+  try {
+   const user = await User.findById(userId)
+   const accessToken=user.generateAccessToken()
+   const refreshToken=user.generateRefreshToken()
+
+   user.refreshToken=refreshToken
+   await user.save({validateBeforeSave:false})
+
+   return {accessToken,refreshToken}
+    
+  } catch (error) {
+    throw new apierror(500,"something went wrong while generating refreshtoken and accesstoken")
+  }
+}   
 
 const registerUser = asyncHandler(async (req, res, next) => {
 
@@ -96,8 +112,133 @@ const registerUser = asyncHandler(async (req, res, next) => {
 
  
 })
-
     
 
+const loginUser =asyncHandler(async(req,res,next)=>{    //req.body ->data
+  //username or email
+  //find user
+  //password
+  //access token todos and refreh token
+  //send cookies
+      const {username,email,password}=req.body
+      console.log("EMAIL IS:",email)
+      if(!email && !username ){
+        throw new apierror(400,"either email or username  is compulsory")
+      }
+      
+      const user=await User.findOne({
+      $or:[{email},{username}]
+      })
 
-export {registerUser} 
+      if(!user){
+        throw new apierror(404,"User does not exist")
+      }
+      const isPasswordValid=await user.ispasswordcorrect(password)
+      if(!isPasswordValid){
+        throw new apierror("401","invalid user crednetial")
+      }
+
+      const{accessToken,refreshToken}= await generateAccessAndRefreshToken(user._id)
+
+
+         //cookies me bhejo ab
+
+      const loggedInUser=await User.findById(user._id). // call kiya kyuki pichla user ke refresh token ka access nhi tha 
+      select("-password -refreshToken")
+
+      const options={
+        httpOnly:true,
+        secure:false
+      };
+
+      return res.status(200)
+      .cookie("accessToken",accessToken,options)
+      .cookie("refreshToken",refreshToken,options)
+      .json(
+        new apiresponse(
+          200,{
+            user:loggedInUser,accessToken,refreshToken
+          },
+          "user login  successfully"
+        )
+      )
+
+   
+       
+
+
+})
+
+const logoutUser=asyncHandler(async(req,res,next)=>{
+  //clear cookies  
+  await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set:{
+        refreshToken:undefined
+      }
+    },
+    {
+      new:true
+    }
+  )
+   const options={
+    httpOnly:true,
+    secure:false
+   }
+
+   return res.status(200).
+   clearCookie("accessToken",options)
+   .clearCookie("refreshToken",options)
+   .json(new apiresponse(200,{},"User logged out"))
+
+
+
+   
+
+})
+
+const refrehAccessToken=asyncHandler(async(req,res)=>{
+  const incomingRefreshToken=req.cookies.refreshToken||req.body.refreshToken
+  if(!incomingRefreshToken){
+    throw new apierror(401,"unauthorized request")
+  }
+  try {
+    const decodedToken=jwt.verify(incomingRefreshToken,process.env.REFRESH_TOKEN_SECRET)
+    const user=await User.findById(decodedToken._id)
+  
+    if(!user){
+      throw new apierror(401,"Invalid refreshtoken")
+    }
+    if(incomingRefreshToken!==user.refreshToken){
+      throw new apierror(401,"refresh token is expired or used")
+    }
+  
+    const {accessToken,newrefreshToken}=await generateAccessAndRefreshToken(user._id)
+    //cookies me bhejna hai toh const options obejct bana lo
+    const options={
+      httpOnly:true,
+      secure:true
+    }
+  
+    res.status(200)
+    .cookie("accessToken",accessToken,options)
+    .cookie("refreshToken",newrefreshToken,options)
+    .json(
+      new apiresponse(200,
+        { user,accessToken,refreshToken:newrefreshToken },
+        "Access token refresh successfully"
+      )
+    )
+  } catch (error) {
+    throw new apierror(401,error?.message || "Invalid refreh token")
+  }
+  
+})
+
+
+  export {registerUser,
+  loginUser,
+  logoutUser,
+  refrehAccessToken
+  } 
