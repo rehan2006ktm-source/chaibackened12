@@ -16,4 +16,14 @@ export const upload = multer({ storage })
 
 //Multer ek library hai
 //👉 Jo file upload handle karne ke liye middleware banati hai
-
+/*{req.files
+  fieldname: 'avatar',
+  originalname: 'photo.png',
+  encoding: '7bit',
+  mimetype: 'image/png',
+  destination: 'public/temp',
+  filename: 'photo.png',
+  path: 'public/temp/photo.png',
+  size: 34567
+}
+ */

@@ -168,8 +168,8 @@ const loginUser =asyncHandler(async(req,res,next)=>{    //req.body ->data
 
 
 })
-
-const logoutUser=asyncHandler(async(req,res,next)=>{
+ 
+const logoutUser=asyncHandler(async(req,res,next)=>{ 
   //clear cookies  
   await User.findByIdAndUpdate(
     req.user._id,
@@ -187,8 +187,8 @@ const logoutUser=asyncHandler(async(req,res,next)=>{
     secure:false
    }
 
-   return res.status(200).
-   clearCookie("accessToken",options)
+   return res.status(200)
+   .clearCookie("accessToken",options)
    .clearCookie("refreshToken",options)
    .json(new apiresponse(200,{},"User logged out"))
 
@@ -198,12 +198,12 @@ const logoutUser=asyncHandler(async(req,res,next)=>{
 
 })
 
-const refrehAccessToken=asyncHandler(async(req,res)=>{
+const refreshAccessToken=asyncHandler(async(req,res)=>{
   const incomingRefreshToken=req.cookies.refreshToken||req.body.refreshToken
   if(!incomingRefreshToken){
     throw new apierror(401,"unauthorized request")
   }
-  try {
+  try { 
     const decodedToken=jwt.verify(incomingRefreshToken,process.env.REFRESH_TOKEN_SECRET)
     const user=await User.findById(decodedToken._id)
   
@@ -226,7 +226,7 @@ const refrehAccessToken=asyncHandler(async(req,res)=>{
     .cookie("refreshToken",newrefreshToken,options)
     .json(
       new apiresponse(200,
-        { user,accessToken,refreshToken:newrefreshToken },
+        {accessToken,refreshToken:newrefreshToken },
         "Access token refresh successfully"
       )
     )
@@ -237,8 +237,130 @@ const refrehAccessToken=asyncHandler(async(req,res)=>{
 })
 
 
+const changeCurrentPassword=asyncHandler(async(req,res)=>{
+  const {oldpassword,newpassword}=req.body//if u want confirmpassword
+
+  /*if confirm password hai toh just check 
+  if(newpassword!==confirmpassword){
+  throw new apierror ()
+  }
+   */
+  const user=await User.findById(req.user?._id)
+  const ispasswordcorrect=await user.ispasswordcorrect(oldpassword)
+
+  if(!ispasswordcorrect){
+    throw new apierror(400,"Invalid old password")
+  }
+
+  user.password=newpassword
+  await user.save({validateBeforeSave:false})
+
+  return res.status(200)
+  .json(200,{},"password changed successfully")
+
+
+})
+
+const getCurrentUser=asyncHandler(async(req,res)=>{
+  const user=User.findById(req.user?._id)
+  return res.status(200)
+  .json(200,req.user,"current user fetched successfuly")
+})
+
+const updateAccountDetails=asyncHandler(async(req,res)=>{
+  const {fullname,email}=req.body
+
+  if(!fullname || !email){
+    throw new apierror(401,"All fields are required");
+  }
+
+  const user =User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set:{
+        email,
+        fullname:fullname
+    }
+  },
+    {new:true}
+  )
+
+  return res.status(200)
+  .json(new apiresponse(200,user,"Account updated successfully"))
+
+
+
+
+
+})
+
+//file update karane ke liye new controller banao  alag end point banao better approach 
+//keep in mind router me 
+//multer se check  
+
+const updateUserAvatar=asyncHandler(async(req,res)=>{
+  const avatarLocalPath=req.file?.path
+
+  if(!avatarLocalPath){
+    throw new apierror(400,"avatar file is missing")
+  }
+
+ const avatar= await uploadOnCloudinary(avatarLocalPath)
+
+
+ if(!avatar){
+  throw new apierror(401,"error while uploading file on cloudinary")
+ }
+
+ const user= User.findByIdAndUpdate(req.user._id,{
+  $set:{
+    avatar:avatar.url
+  }
+ },{new:true})
+ .select("-password")
+
+
+ return res.status(200)
+ .json(new apiresponse(200,user,"avatar image updated successfully"))
+
+})
+
+
+const updateUserCoverImage=asyncHandler(async(req,res)=>{
+  const coverImageLocalPath=req.file?.path
+
+  if(!coverImageLocalPath){
+    throw new apierror(400,"avatar file is missing")
+  }
+
+ const coverImage =await uploadOnCloudinary(coverImageLocalPath)
+
+
+ if(!coverImage){
+  throw new apierror(401,"error while uploading file on cloudinary")
+ }
+
+ const user= User.findByIdAndUpdate(req.user._id,{
+  $set:{
+    coverImage:coverImage.url
+  }
+ },{new:true})
+ .select("-password")
+
+
+ return res.status(200)
+ .json(new apiresponse(200,user,"cover image updated successfully"))
+
+})
+
   export {registerUser,
   loginUser,
   logoutUser,
-  refrehAccessToken
+  refreshAccessToken,
+  changeCurrentPassword,
+  getCurrentUser,
+  updateAccountDetails,
+  updateUserAvatar,
+  updateUserCoverImage
+  
   } 

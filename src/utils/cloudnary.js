@@ -16,7 +16,7 @@ const uploadOnCloudinary=async(localfilepath)=>{
        const response= await cloudinary.uploader.upload(localfilepath,{
             resource_type:"auto"
         })
-       // console.log("FILE HAS BEEN UPLOADED SUCCESSFULLY",response.url)
+       // console.log ("FILE HAS BEEN UPLOADED SUCCESSFULLY",response.url)
         fs.unlinkSync(localfilepath)
        
         return response// session id ,id, url,secure url,version
@@ -33,3 +33,18 @@ const uploadOnCloudinary=async(localfilepath)=>{
 }
 
 export {uploadOnCloudinary}
+
+/*
+{ response.url hai 
+  asset_id: "c123...",
+  public_id: "user_avatars/abc123",
+  version: 1706512345,
+  width: 512,
+  height: 512,
+  format: "png",
+  resource_type: "image",
+  created_at: "2026-01-30T10:20:30Z",
+  url: "http://res.cloudinary.com/...",
+  secure_url: "https://res.cloudinary.com/...",
+}
+*/ 
