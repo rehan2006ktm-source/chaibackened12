@@ -37,6 +37,13 @@ const userSchema=new Schema({
         type:mongoose.Schema.Types.ObjectId,
         ref:"video"
     }],
+    /*
+    watchhistory look llike this  
+    watchHistory: [
+  { V1 data },
+  { V2 data }
+]
+ */
     password:{
         type:String,
         required:[true,"password is required"]
