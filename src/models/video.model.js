@@ -1,4 +1,4 @@
-import mongoose from "mongoose "
+import mongoose from "mongoose"
 //plugging ki traf inject 
 
 
@@ -23,11 +23,11 @@ const videoSchema=new mongoose.Schema({
         require:true
     },
     duration:{ //cloudnery 
-        type:number,
+        type:Number,
         required:true
     },
     views:{
-        type:number,
+        type:Number,
         default:0
     },
     ispublished:{

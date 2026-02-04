@@ -5,7 +5,7 @@ import  {uploadOnCloudinary} from "../utils/cloudnary.js"
 import {apiresponse} from "../utils/apiresponse.js"
 import jwt from "jsonwebtoken"
 import {deletefromcloudinary} from "../utils/dltefilefromcloud.js"
-
+import mongoose from "mongoose"
 
 const generateAccessAndRefreshToken=async(userId)=>{
   try {
@@ -177,8 +177,8 @@ const logoutUser=asyncHandler(async(req,res,next)=>{
   await User.findByIdAndUpdate(
     req.user._id,
     {
-      $set:{
-        refreshToken:undefined
+      $unset:{
+        refreshToken:1
       }
     },
     {
@@ -221,7 +221,7 @@ const refreshAccessToken=asyncHandler(async(req,res)=>{
     //cookies me bhejna hai toh const options obejct bana lo
     const options={
       httpOnly:true,
-      secure:true
+      secure:false
     }
   
     res.status(200)
@@ -391,7 +391,7 @@ const getUserChannelProfile=asyncHandler(async(req,res)=>{
     const channel=await User.aggregate([
       {
         $match:{
-          username:username?.tolowerCase()
+          username:username?.toLowerCase()
         }
       },
       {
