@@ -6,7 +6,7 @@ import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2"
 
 
 const videoSchema=new mongoose.Schema({
-    videofile:{ // cloudnery 
+    videoFile:{ // cloudnery 
          type:String,
          required:true
     },
@@ -30,7 +30,7 @@ const videoSchema=new mongoose.Schema({
         type:Number,
         default:0
     },
-    ispublished:{
+    isPublished:{
         type:Boolean,
         default:true
     },
@@ -38,6 +38,10 @@ const videoSchema=new mongoose.Schema({
         type:mongoose.Schema.Types.ObjectId,
         ref:"user"
 //sirf id aayega 
+    },
+    isDeleted:{
+        type:Boolean,
+        default:false
     }
 
 

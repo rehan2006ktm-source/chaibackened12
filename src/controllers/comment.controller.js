@@ -1,10 +1,10 @@
-import { Comment } from "../models/comment.model.js";
-import { User } from "../models/user.model.js";
-import { asyncHandler } from "../utils/asynchandler.js";
-import { apierror } from "../utils/apierror.js";
-import { apiresponse } from "../utils/apiresponse.js";
+import {Comment} from "../models/comment.model.js";
+import {User} from "../models/user.model.js";
+import {asyncHandler} from "../utils/asynchandler.js";
+import {apierror} from "../utils/apierror.js";
+import {apiresponse} from "../utils/apiresponse.js";
 import mongoose from "mongoose"
-import { Video } from "../models/video.model.js";
+import {Video} from "../models/video.model.js";
 
 //banda logged in hona chahiye 
 
@@ -13,6 +13,48 @@ const getVideoComment=asyncHandler(async(req,res)=>{
     if(!videoId){
         throw new apierror(400,"video url does not exist")
     }
+    const video=await Video.findById(videoId)
+    if(!video){
+        throw new apierror(400,"video does not exist")
+    }
+    const c= await Comment.aggregate([
+        {
+            $match:{
+                videoId:new mongoose.Types.ObjectId(videoId)
+            }//isse pura comment aa jayega 
+        },
+        {
+            $lookup:{
+                from:"users",
+                localField:"owner",
+                foreignField:"_id",
+                as:"owner",
+             }
+        },
+        {
+            $addFields:{
+                owner:{
+                    $first:"$owner"
+                }
+            }
+        },
+        {
+            $project:{
+                _id:1,
+                content:1,
+                "owner.username":1,
+                "owner.fullname":1
+            }
+        }
+      // {
+        //    $unwind:"$Owner"
+        //}
+    ])
+
+    res.status(200).
+    json(new apiresponse(200,c,"Video comments fetched successfully"))
+        
+    
     
 })
 
