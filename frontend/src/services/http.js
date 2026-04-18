@@ -1,7 +1,7 @@
 import axios from "axios";
 import { toast } from "react-hot-toast";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "https://chaibackened12.onrender.com/api/v1";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://chaibackened12-ozc0.onrender.com/api/v1";
 
 export const http = axios.create({
   baseURL: API_BASE,

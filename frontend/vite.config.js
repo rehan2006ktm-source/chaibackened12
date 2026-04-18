@@ -13,7 +13,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://chaibackened12.onrender.com',
+        target: 'https://chaibackened12-ozc0.onrender.com',
         changeOrigin: true,
         secure: false,
       },
