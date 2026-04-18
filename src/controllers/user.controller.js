@@ -24,6 +24,7 @@ const generateAccessAndRefreshToken=async(userId)=>{
 }   
 
 const registerUser = asyncHandler(async (req, res, next) => {
+  try {
 
   //console.log("REQ.FILES
   //  =>", req.files);
@@ -51,8 +52,11 @@ const registerUser = asyncHandler(async (req, res, next) => {
 
 
       //3->
+      const normalizedUsername = username.toLowerCase()
+      const normalizedEmail = email.toLowerCase()
+
       const existedUser =await User.findOne({
-        $or:[{username},{email}]
+        $or:[{username: normalizedUsername},{email: normalizedEmail}]
       })
 
       if(existedUser){
@@ -60,7 +64,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
       }
 
       //4->
-       const avatarLocalPath=req.files?.avatar[0]?.path
+       const avatarLocalPath=req.files?.avatar?.[0]?.path
        //const coverImagePath=req.files?.coverImage[0]?.path
 
        let coverImagePath;
@@ -68,29 +72,28 @@ const registerUser = asyncHandler(async (req, res, next) => {
       req.files.coverImage.length>0){
         coverImagePath=req.files.coverImage[0].path
       }
-       if(!avatarLocalPath){
-        throw new apierror(400,"avatar file is  required")
-       }
        let coverImage=await uploadOnCloudinary(coverImagePath)
  
       // console.log("AVATAR LOCAL PATH:", avatarLocalPath);
        
-       let avatar=await uploadOnCloudinary(avatarLocalPath)
-
-       //console.log("CLOUDINARY AVATAR RESPONSE:", avatar);
-
-      if(!avatar){
-        throw new apierror(400,"avatar file is required")
+       let avatar = null
+       if(avatarLocalPath){
+        avatar=await uploadOnCloudinary(avatarLocalPath)
+        if(!avatar){
+          throw new apierror(400,"avatar upload failed. please try another image")
+        }
        }
+
+      const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(fullname)}&background=1f2937&color=ffffff`
 
        //5->
 
        const user=await User.create({
         fullname,
-        email,
-        avatar:avatar.url,
+        email: normalizedEmail,
+        avatar:avatar?.url || fallbackAvatar,
         coverImage:coverImage?.url||"",
-        username:username.toLowerCase(),
+        username:normalizedUsername,
         password
        })
 
@@ -109,11 +112,12 @@ const registerUser = asyncHandler(async (req, res, next) => {
        return res.status(200).json(
         new apiresponse(200,createdUser,"User registered Successfully")
        ) 
-
-        
-
-
- 
+  } catch (error) {
+    if (error instanceof apierror) {
+      throw error
+    }
+    throw new apierror(500, error?.message || "registration failed")
+  }
 })
     
 
@@ -151,10 +155,12 @@ const loginUser =asyncHandler(async(req,res,next)=>{    //req.body ->data
 
       const options={
         httpOnly:true,
-        secure:false
+        secure:false,
+        sameSite:"lax"
       };
 
       return res.status(200)
+      
       .cookie("accessToken",accessToken,options)
       .cookie("refreshToken",refreshToken,options)
       .json(
@@ -187,10 +193,12 @@ const logoutUser=asyncHandler(async(req,res,next)=>{
   )
    const options={
     httpOnly:true,
-    secure:false
+    secure:false,
+    sameSite:"lax"
    }
 
    return res.status(200)
+   //.clearCookie()
    .clearCookie("accessToken",options)
    .clearCookie("refreshToken",options)
    .json(new apiresponse(200,{},"User logged out"))
@@ -217,19 +225,20 @@ const refreshAccessToken=asyncHandler(async(req,res)=>{
       throw new apierror(401,"refresh token is expired or used")
     }
   
-    const {accessToken,newrefreshToken}=await generateAccessAndRefreshToken(user._id)
+    const {accessToken,refreshToken}=await generateAccessAndRefreshToken(user._id)
     //cookies me bhejna hai toh const options obejct bana lo
     const options={
       httpOnly:true,
-      secure:false
+      secure:false,
+      sameSite:"lax"
     }
   
     res.status(200)
     .cookie("accessToken",accessToken,options)
-    .cookie("refreshToken",newrefreshToken,options)
+    .cookie("refreshToken",refreshToken,options)
     .json(
       new apiresponse(200,
-        {accessToken,refreshToken:newrefreshToken },
+        {accessToken,refreshToken },
         "Access token refresh successfully"
       )
     )
@@ -311,7 +320,7 @@ const updateUserAvatar=asyncHandler(async(req,res)=>{
   if(!userold){
     throw new apierror(404,"user not found")
   }
-  const oldavatar= userold.avatar?.url
+  const oldavatar= userold.avatar
 
 
   const avatarLocalPath=req.file?.path
@@ -387,9 +396,10 @@ const getUserChannelProfile=asyncHandler(async(req,res)=>{
     if(!username?.trim()){
       throw new apierror(400,"username is missing ")
     }
+    User.findOne()
 
     
-    const channel=await User.aggregate([
+    const channel=await User.aggregate([//ye array returnn karega of single object 
       {
         $match:{
           username:username?.toLowerCase()
@@ -469,7 +479,7 @@ const getWatchHistory=asyncHandler(async(req,res)=>{
         from:"videos", 
         localField:"watchHistory",
         foreignField:"_id",
-        as:"watchHistory",
+        as:"watchHistory", // one array jisme multiple object hoga if you use $first remove the array and delete all the object except the first one 
         pipeline:[
            {
             $lookup:{
@@ -491,7 +501,7 @@ const getWatchHistory=asyncHandler(async(req,res)=>{
            {
             $addFields:{
               owner:{
-                $first:"$owner"
+                $first:"$owner"// ye array ko object me convert kkarta hai 
               }
             }
            }
@@ -520,7 +530,7 @@ console.log(user)
         _id: ObjectId("V1"),
         title: "MongoDB Tutorial",
         description: "...",
-        owner: [
+        owner<: [
           {
             _id: ObjectId("U9"),
             fullname: "Chai Aur Code",

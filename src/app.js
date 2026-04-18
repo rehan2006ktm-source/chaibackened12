@@ -5,25 +5,26 @@ import cors from "cors"
 import cookieParser from "cookie-parser"
 
 dotenv.config({
-    path:"./.env"
+    path: "./.env"
 })
 
-const app=express() 
+const app = express()
 
 
 app.use(cors({
-    origin: process.env.CORS_ORIGIN,
-     credentials:true
+    origin: process.env.CORS_ORIGIN || "http://localhost:5173",
+    credentials: true
 }))
 
-app.use(express.json({limit:"16kb"}))
+app.use(express.json({ limit: "16kb" }))
 app.use(express.urlencoded({
-    extended:true,
-    limit:"16kb"
+    extended: true,
+    limit: "16kb"
 }))
 
 app.use(express.static("public"))
 app.use(cookieParser())
+
 
 
 
@@ -38,11 +39,7 @@ import likeRouter from "./routes/likes.routes.js"
 //import playlistRouter from "./routes/playlist.routes.js"
 import dashboardRouter from "./routes/dashboard.routes.js"
 
-app.use("/api/v1/users",userRouter)
 
-
-console.log("something")
-app.use("/api/v1/comments",commentRouter)
 app.use("/api/v1/healthcheck", healthcheckRouter)
 app.use("/api/v1/users", userRouter)
 app.use("/api/v1/tweets", tweetRouter)
@@ -53,8 +50,26 @@ app.use("/api/v1/likes", likeRouter)
 //app.use("/api/v1/playlist", playlistRouter)
 app.use("/api/v1/dashboard", dashboardRouter)
 
+// Global error handler
+app.use((err, req, res, next) => {
+    const statusCode = err.statusCode || 500;
+    const message = err.message || "Internal Server Error";
+
+    res.status(statusCode).json({
+        success: false,
+        statusCode,
+        message,
+        errors: err.errors || []
+    });
+});
+
 //https://localhost:5000/api/v1/users/register
 
 
 
-export {app}
+export { app }
+
+
+
+//const API_BASE = "https://chaibackened12.onrender.com";
+//frontend me ye add kr do 

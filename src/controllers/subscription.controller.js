@@ -101,7 +101,7 @@ const getSubscribedChannels=asyncHandler(async(req,res)=>{
     {
       // maine jin channels ko subscribe kiya
       $match: {
-        subscriber: userId
+        subscriber: new mongoose.Types.ObjectId(userId)
       }
     },
     {
@@ -133,6 +133,7 @@ const getSubscribedChannels=asyncHandler(async(req,res)=>{
     data: subscribedChannels
   });
 })
+
 
 export {
     toggleSubscription,

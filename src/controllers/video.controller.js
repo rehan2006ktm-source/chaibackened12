@@ -11,7 +11,7 @@ import {Video} from "../models/video.model.js"
 
 
  const getAllVideos=asyncHandler(async(req,res)=>{
-    const {page=1,limit=10}=req.query
+    const {page=1,limit=10}=req.query// comes as string 
     const video=await Video.aggregate([
         {
             $match:{
@@ -65,7 +65,7 @@ import {Video} from "../models/video.model.js"
 })
 
 const publishVideo=asyncHandler(async(req,res)=>{
-    const{title,description,}=req.body
+    const{title,description}=req.body
     if([title,description].some((fields)=>
         fields?.trim()===""
     )){

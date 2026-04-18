@@ -50,12 +50,20 @@ router.route("/avatar").patch(verifyJWT,upload.single("avatar")
 router.route("/coverImage").patch(verifyJWT,upload.single("coverImage")
 ,updateUserCoverImage)        
 
-router.route("/c/:username").get(verifyJWT,getUserChannelProfile)
+router.route("/c/:username").get(verifyJWT,getUserChannelProfile)//req.params se data
 
 router.route("/history").get(verifyJWT,getWatchHistory)
 
-export default router
 
+/*
+fetch("http://localhost:8000/api/v1/users/history", {
+   method: "GET",
+   headers: {
+      Authorization: `Bearer ${token}`
+   }
+}); */
+export default router
+//app.use(/api/v1/healthcheck", healthcheckRouter)
 /*req.files = {
   avatar: [
     {

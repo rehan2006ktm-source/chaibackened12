@@ -83,6 +83,7 @@ const getUserTweets=asyncHandler(async(req,res)=>{
         throw new apierror(403,"you are not authorized to delete")
     }
     await Tweet.findByIdAndDelete(tweet._id)
+    
     return res .status(200).json(
         new apiresponse(200,{"message":"deleted"},"tweet deleted successfully")
     )

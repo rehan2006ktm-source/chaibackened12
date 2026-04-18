@@ -13,18 +13,23 @@ cloudinary.config({
 const uploadOnCloudinary=async(localfilepath)=>{
     try{
         if(!localfilepath) return null;
+        if(!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET){
+            throw new Error("Cloudinary environment variables are missing")
+        }
        const response= await cloudinary.uploader.upload(localfilepath,{
             resource_type:"auto"
         })
        // console.log ("FILE HAS BEEN UPLOADED SUCCESSFULLY",response.url)
-        fs.unlinkSync(localfilepath)
+        if(fs.existsSync(localfilepath)){
+            fs.unlinkSync(localfilepath)
+        }
        
         return response// session id ,id, url,secure url,version
     }
     catch(error){
         console.error("CLOUDINARY ERROR 👉", error.message);
   
-        if(localfilepath){
+        if(localfilepath && fs.existsSync(localfilepath)){
             fs.unlinkSync(localfilepath)
         }
         return null
